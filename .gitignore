@@ -1,0 +1,10 @@
+BattleNet.sdf
+.vs/BattleNet/v14/.suo
+BattleNet.VC.opendb
+BattleNet.sln
+BattleNet/BattleNet.vcxproj
+BattleNet/BattleNet.vcxproj.filters
+BattleNet/BattleNet.vcxproj.user
+BattleNet/Debug/
+BattleNet/x64/
+bin/
