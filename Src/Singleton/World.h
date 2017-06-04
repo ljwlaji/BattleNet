@@ -43,6 +43,7 @@ struct ItemTemplate
 	uint32 ItemLevel;
 	uint32 RequiredLevel;
 };
+class WorldSession;
 
 struct SingleBattleNetAccount
 {
@@ -52,17 +53,20 @@ struct SingleBattleNetAccount
 	uint32 CharacterToShow;
 	bool IsOnline;
 	uint32 guild_id;
+	WorldSession* m_session;
+
 };
 
-class WorldSession;
 typedef std::map<uint32, WorldSession*> SessionMap;
 class World
 {
 public:
 	static World* GetInstance();
 	void OnStart();
-	WorldSession* CreateSessionForNewSocket(const uint32& Socket,const char* buff);
+	WorldSession* CreateSessionForNewSocket(const uint32& Socket,std::string& address,const uint8& socketpage);
 	WorldSession* GetSessionBySocket(const uint32& Socket);
+	SingleBattleNetAccount* GetBattleNetInfo(const uint32& account_id);
+	const GuildTemplate* GetGuildInfoById(const uint32& guid_id);
 private:
 	World();
 	~World();
@@ -81,6 +85,7 @@ private:
 	std::map<uint32, ItemTemplate> m_ItemTemplatMap;
 	std::map<uint32, AuctionItem> m_AcutionMap;
 	std::map<uint32, GuildTemplate> m_GuidMap;
+	std::list<SessionMap::iterator> RemoveItr;
 };
 
 #endif

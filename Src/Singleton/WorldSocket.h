@@ -12,7 +12,8 @@
 #include "Common.h"
 
 #define sWorldSocket WorldSocket::GetInstance()
-
+#define SERVER_IP "192.168.0.101"
+#define SERVER_PORT 6000
 
 class SocketList
 {
@@ -20,16 +21,17 @@ private:
 	int num;//记录socket的真实数目  
 	SOCKET socketArray[256];//存放socket的数组  
 	std::mutex ListLock;
+	uint8 m_Page;
 public:
 	bool IsFull();
 	SOCKET getSocket(int i) { return socketArray[i]; }
 	//构造函数中对两个成员变量进行初始化  
-	SocketList();
+	SocketList(uint8 PageCount);
 	//往socketArray中添加一个socket  
 	void insertSocket(SOCKET s);
 	//从socketArray中删除一个socket  
 	void deleteSocket(SOCKET s);
-
+	uint8 GetPage() { return m_Page; }
 	//将socketArray中的套接字放入fd_list这个结构体中  
 	void makefd(fd_set * fd_list);
 };
@@ -41,10 +43,12 @@ class WorldSocket
 public:
 	static WorldSocket* GetInstance();
 public:
+	int SendPacket(SOCKET socket,const WorldPacket& pack);
 	void StartUp(bool& Finished);
 	void StartNewWorkThread(SocketList* pList);
 	void PushList(SocketList* pList);
-	void NewSocketComming(const SOCKET& pSocket, const char* buff);
+	void NewSocketComming(const SOCKET& pSocket,const uint8& SOcketPage);
+	void CloseSocket(const SOCKET& pSocket,const uint8& socketpage);
 	//void RemoveSocket(const SOCKET& socket);
 private:
 	WorldSocket();

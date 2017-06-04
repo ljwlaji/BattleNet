@@ -24,6 +24,17 @@ WorldSocket * WorldSocket::GetInstance()
 	return _WorldSocket;
 }
 
+int WorldSocket::SendPacket(SOCKET socket, const WorldPacket & pack)
+{
+	char send_buffer[1024];
+	int send_len = 8 + pack.size();
+	*((int*)send_buffer) = send_len;
+	*((int*)(send_buffer + 4)) = pack.GetOpcode();
+	memcpy(send_buffer + 8, pack.contents(), pack.size());
+
+	return send(socket, send_buffer, send_len, 0);
+}
+
 void WorldSocket::StartUp(bool& Finished)
 {
 	WSADATA wsaData;
@@ -50,9 +61,9 @@ void WorldSocket::StartUp(bool& Finished)
 
 	//服务器端的地址和端口号  
 	struct sockaddr_in serverAddr, clientAdd;
-	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(6000);
+	serverAddr.sin_port = htons(SERVER_PORT);
 
 	//3.绑定Socket，将Socket与某个协议的某个地址绑定  
 	err = ::bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
@@ -79,7 +90,7 @@ void WorldSocket::StartUp(bool& Finished)
 	sLog->OutWarning("网络线程数量被设置为：%d 个", SocketNumber);
 	for (int i = 0; i != SocketNumber; i++)
 	{
-		SocketList* socketList = new SocketList();
+		SocketList* socketList = new SocketList(i);
 		PushList(socketList);
 		std::thread th(&WorldSocket::StartNewWorkThread, this, socketList);
 		th.detach();
@@ -103,10 +114,11 @@ void WorldSocket::StartUp(bool& Finished)
 			{
 				SocketList* TempList = SocketListVector.at(i);
 				SocketListVector.at(i)->insertSocket(sockConn);
-				struct sockaddr_in sa;
-				int len = sizeof(sa);
-				if (!getpeername(sockConn, (sockaddr*)&sa, &len))
-					sLog->OutLog("新连接接入: %s", inet_ntoa(sa.sin_addr));
+				//struct sockaddr_in sa;
+				//int len = sizeof(sa);
+				//if (!getpeername(sockConn, (sockaddr*)&sa, &len))
+				sLog->OutLog("新连接接入 %d", sockConn);
+				NewSocketComming(sockConn, i);
 				AllFull = false;
 				break;
 			}
@@ -143,7 +155,7 @@ void WorldSocket::StartNewWorkThread(SocketList* pList)
 		ErrorCode = select(0, &fdread, NULL, NULL, &timeout);
 		if (ErrorCode == 0)//select返回0表示超时
 		{
-			sLog->OutLog("暂无可用数据包接收");
+			sLog->OutLog("线程 %d 暂无可用数据包接收", pList->GetPage());
 			continue;
 		}
 		else if (ErrorCode == -1)
@@ -188,10 +200,20 @@ void WorldSocket::PushList(SocketList * pList)
 	SocketListVector.push_back(pList);
 }
 
-void WorldSocket::NewSocketComming(const SOCKET & pSocket, const char * buff)
+void WorldSocket::NewSocketComming(const SOCKET & pSocket,const uint8& SocketPage)
 {
-	if (WorldSession* session = sWorld->CreateSessionForNewSocket(pSocket, buff))
+	struct sockaddr_in sa;
+	int len = sizeof(sa);
+	getpeername(pSocket, (sockaddr*)&sa, &len);
+	std::string address = inet_ntoa(sa.sin_addr);
+	if (WorldSession* session = sWorld->CreateSessionForNewSocket(pSocket, address,SocketPage))
 		SocketMap[pSocket] = session;
+}
+
+void WorldSocket::CloseSocket(const SOCKET & pSocket, const uint8& socketpage)
+{
+	closesocket(pSocket);
+	SocketListVector.at(socketpage)->deleteSocket(pSocket);
 }
 
 
@@ -202,20 +224,16 @@ void WorldSocket::NewSocketComming(const SOCKET & pSocket, const char * buff)
 void WorldSocket::RecvPacket(const SOCKET& pSocket, const char * buff)
 {
 	uint16 Opcode = *((uint8*)(buff + 4));
-	if (Opcode > 0x424)
+	if (!Opcode || Opcode > 0x424)
 		return;
 	ThreadLocker loc(SocketMapLock);
 	if (SocketMap.find(pSocket) == SocketMap.end())
-	{//Create A TempThread For New Socket
-		std::thread NesSocketThread(&WorldSocket::NewSocketComming, this, pSocket, buff);
-		NesSocketThread.detach();
 		return;
-	}
 	if (WorldSession* TempSession = sWorld->GetSessionBySocket(pSocket))
 		TempSession->PushPacket(buff);
 }
 
-SocketList::SocketList()
+SocketList::SocketList(uint8 PageCount) : m_Page(PageCount)
 {
 	ThreadLocker loc(ListLock);
 	num = 0;
@@ -256,7 +274,8 @@ void SocketList::deleteSocket(SOCKET s)
 		{
 			socketArray[i] = 0;
 			num--;
-			break;
+			sLog->OutLog("移除客户端 %d, 目前容量 %d", s, FD_SETSIZE - num);
+			return;
 		}
 	}
 }

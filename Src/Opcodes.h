@@ -29,8 +29,21 @@
 // List of Opcodes
 enum Opcodes
 {
-	AUTH_NERVER = 0x000,
-	CMSG_LOGIN = 0x001,
+	MSG_NULLPTR			  = 0x000,
+	CMSG_HEARTBEAT_RESULT = 0x001,
+	SMSG_HEARTBEAT_RESULT = 0x002,
+	CMSG_LOGIN_REQUIRE = 0x003,
+	SMSG_LOGIN_RESULT = 0x004,
+	CMSG_AUTH_DATA_RESULT = 0x005,
+	SMGS_AUTH_DATA_RESULT = 0X006,
+	CMSG_MESSAGE_CHAT = 0x007,
+	SMSG_MESSAGE_CHAT = 0x008,
+};
+
+enum LoginResult
+{
+	Login_Success,
+	Login_Failed,
 };
 
 // Don't forget to change this value and add opcode name to Opcodes.cpp when you add new opcode!

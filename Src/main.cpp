@@ -4,6 +4,7 @@
 #include "World.h"
 #include "Config.h"
 #include "Log.h"
+#include "Chat.h"
 #include <iostream>
 
 bool WorldSocketLoadFinished = false;
@@ -33,6 +34,7 @@ void main()
 	sDataBase->StartUp();
 
 	sLog->OutLog("正在启动网络服务器....");
+
 	std::thread th(&StartWorldSocket);
 	th.detach();
 	char msg[123];
@@ -41,6 +43,7 @@ void main()
 		if (WorldSocketLoadFinished)
 		{
 			sWorld->OnStart();
+			sChat->OnStart();
 			std::thread tah(&WorldUpdater::StartUpdate);
 			tah.detach();
 			break;

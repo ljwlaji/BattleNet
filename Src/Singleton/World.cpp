@@ -56,7 +56,7 @@ void World::LoadBattleNetAccounts()
 
 void World::LoadItemTemplate()
 {
-	BattleNetAccounts.clear();
+	m_ItemTemplatMap.clear();
 	Result _res;//											0	  1		 2		3		4		5		6			7				8			9				10			11
 	if (sDataBase->GetResult(WorldDataBase, _res, "SELECT entry,class,subclass,name,Quality,BuyPrice,SellPrice,InventoryType,AllowableClass,AllowableRace,ItemLevel,RequiredLevel FROM item_template"))
 	{
@@ -140,22 +140,13 @@ void World::LoadGuildMemberTemplate()
 		sLog->OutBug("Load Template Error On void World::LoadGuildMemberTemplate()");
 }
 
-WorldSession* World::CreateSessionForNewSocket(const uint32 & Socket, const char* buff)
+WorldSession* World::CreateSessionForNewSocket(const uint32 & Socket, std::string& address, const uint8& SocketPage)
 {
-	uint16 Lenth = *((uint8*)buff) - 8;
-	uint16 Opcode = *((uint8*)(buff + 4));
-	if (Opcode > 0x424 || Lenth > 0x1000)
-		return nullptr;
-	WorldPacket pack(Lenth, Opcode);
-	pack.resize(Lenth);
-	pack.put(0, (const unsigned char*)buff + 8, Lenth);
 	WorldSession* NewSession = nullptr;
-	
 	ThreadLocker loc(SessionMapLock);
 	if (m_SessionMap.find(Socket) != m_SessionMap.end())
 		NewSession = m_SessionMap[Socket];
-	else NewSession = new WorldSession(Socket);
-
+	else NewSession = new WorldSession(Socket, address, SocketPage);
 	m_SessionMap[Socket] = NewSession;
 	return NewSession;
 }
@@ -168,12 +159,43 @@ WorldSession* World::GetSessionBySocket(const uint32 & Socket)
 	return nullptr;
 }
 
+const GuildTemplate* World::GetGuildInfoById(const uint32& guid_id)
+{
+	if (m_GuidMap.find(guid_id) != m_GuidMap.end())
+		return &m_GuidMap[guid_id];
+	return nullptr;
+}
+
+SingleBattleNetAccount* World::GetBattleNetInfo(const uint32 & account_id)
+{
+	if (BattleNetAccounts.find(account_id) != BattleNetAccounts.end())
+		return &BattleNetAccounts[account_id];
+	return nullptr;
+}
+
 void World::update(const uint32& diff)
 {
 	ThreadLocker loc(SessionMapLock);
 	for (SessionMap::iterator itr = m_SessionMap.begin(); itr != m_SessionMap.end(); itr++)
 		if (WorldSession* single_session = itr->second)
+		{
+			if (single_session->IsClosing())
+			{
+				RemoveItr.push_back(itr);
+				continue;
+			}
 			single_session->Update(diff);
+		}
+
+	while (RemoveItr.size())
+	{
+		if (WorldSession* single_session = (*RemoveItr.begin())->second)
+		{
+			m_SessionMap.erase(*RemoveItr.begin());
+			RemoveItr.pop_front();
+			delete single_session;
+		}
+	}
 }
 
 World::World()

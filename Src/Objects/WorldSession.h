@@ -28,19 +28,35 @@ struct OpcodeHandler;
 class WorldSession
 {
 public:
-	WorldSession(const uint32& _Socket);
+	WorldSession(const uint32& _Socket,const std::string& address,const uint8& m_socketpage);
 	~WorldSession();
 	void Update(const uint32& diff);
-	void Handle_NULL(WorldPacket& recvPacket);
 	void PushPacket(const char* Packet);
 	void PopPacket();
 	WorldPacket* GetNextPacket();
 	void ExecuteOpcode(OpcodeHandler const& opHandle, WorldPacket* packet);
+	uint32 GetSocket() { return m_Socket; }
+	void Close() { m_Closing = true; }
+	bool IsClosing() { return m_Closing; }
+	int SendPacket(const WorldPacket* Packet);
+	void SendHeartBeatPacket();
 private:
 	std::list<const char*> m_Packet_Queue;
 	mutex Packet_Lock;
 	uint32 m_Socket;
 	Player* m_Player;
+	std::string m_Address;
+	bool m_Closing;
+	uint8 m_SocketPage;
+	uint32 BattleNetAccount;
+	uint32 LastPacketTime;
+	uint8 OutPingCount;
+public:
+	//handler
+	void Handle_NULL(WorldPacket& recvPacket);
+	void HandleAuthLoginOpcode(WorldPacket& recvPacket);
+	void HandleClientHeartBeatOpcode(WorldPacket& /*packet*/) {}
+	void HandlePlayerGetDataOpcode(WorldPacket& /*recvPacket*/);
 };
 #endif
 

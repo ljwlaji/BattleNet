@@ -3,6 +3,7 @@
 #include "WorldUpdater.h"
 #include "World.h"
 #include "Log.h"
+#include "Chat.h"
 mutex WU_Locker;
 static WorldUpdater* _WorldUpdater = nullptr;
 
@@ -32,6 +33,7 @@ void WorldUpdater::_update()
 		if (diff)
 		{
 			sWorld->update(diff);
+			sChat->Update(diff);
 		}
 		TimeOld = TimeNew;
 		Sleep(1);

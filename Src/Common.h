@@ -12,11 +12,11 @@ using namespace std;
 #define	int8				signed char				
 #define	int16				short
 #define	int32				int
-#define	int64				signed __int64
+#define	int64				signed long
 
 #define	uint8				unsigned char		
 #define	uint16				unsigned short		
 #define	uint32				unsigned int		
-#define	uint64				unsigned __int64	
+#define	uint64				unsigned long	
 
 #endif

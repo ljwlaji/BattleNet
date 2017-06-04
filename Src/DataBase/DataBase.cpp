@@ -17,7 +17,7 @@ DataBase::DataBase()
 
 DataBase::~DataBase()
 {
-
+	_DataBase = nullptr;
 }
 
 void DataBase::StartUp()
@@ -77,7 +77,7 @@ void DataBase::PExcude(DataBaseType _type, const char* args, ...)
 		return;
 	}
 	mysql_query(&mysql, "SET NAMES UTF8");
-	t = mysql_real_query(&mysql, args, (unsigned int)strlen(args));
+	t = mysql_real_query(&mysql, szQuery, (unsigned int)strlen(szQuery));
 	mysql_close(&mysql);
 }
 
@@ -104,12 +104,14 @@ bool DataBase::GetResult(DataBaseType _type, Result& sqlresult, const char* args
 	if (!mysql_real_connect(&mysql, server.c_str(), user.c_str(), password.c_str(), _database.c_str(), port, NULL, 0))
 	{
 		mysql_close(&mysql);
+		sLog->OutBug("Á¬½Ó´íÎó");
 		return nullptr;
 	}
 	mysql_query(&mysql, "SET NAMES UTF8");
-	t = mysql_real_query(&mysql, args, (unsigned int)strlen(args));
+	t = mysql_real_query(&mysql, szQuery, (unsigned int)strlen(szQuery));
 	if (t)
 	{
+		mysql_close(&mysql);
 		return nullptr;
 	}
 	else

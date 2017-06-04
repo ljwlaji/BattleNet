@@ -21,7 +21,14 @@
 // Correspondence between opcodes and their names
 OpcodeHandler opcodeTable[NUM_MSG_TYPES] =
 {
-	/*0x000*/{ "CMSG_LOGIN",                  STATUS_NEVER,    &WorldSession::Handle_NULL },
-	/*0x000*/{ "CMSG_LOGIN",                  STATUS_NEVER,    &WorldSession::Handle_NULL },
+	/*0x000*/{ "NullOpcode",				STATUS_NEVER,		&WorldSession::Handle_NULL },
+	/*0x000*/{ "CMSG_HEARTBEAT_RESULT",     STATUS_NEVER,		&WorldSession::HandleClientHeartBeatOpcode },
+	/*0x000*/{ "SMSG_HEARTBEAT_RESULT",     STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x000*/{ "CMSG_LOGIN_REQUIRE",		STATUS_AUTHED,		&WorldSession::HandleAuthLoginOpcode },
+	/*0x000*/{ "SMSG_LOGIN_RESULT",         STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x000*/{ "CMSG_AUTH_DATA_RESULT",		STATUS_AUTHED,		&WorldSession::HandlePlayerGetDataOpcode },
+	/*0x000*/{ "SMGS_AUTH_DATA_RESULT",		STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x000*/{ "CMSG_MESSAGE_CHAT",			STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x000*/{ "SMSG_MESSAGE_CHAT",			STATUS_AUTHED,		&WorldSession::Handle_NULL },
 };
 
