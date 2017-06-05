@@ -1,4 +1,4 @@
-#include "WorldSocket.h"
+ï»¿#include "WorldSocket.h"
 #include "Opcodes.h"
 #include "World.h"
 #include "WorldPacket.h"
@@ -40,54 +40,54 @@ void WorldSocket::StartUp(bool& Finished)
 	WSADATA wsaData;
 	int err;
 
-	//1.¼ÓÔØÌ×½Ó×Ö¿â  
+	//1.åŠ è½½å¥—æ¥å­—åº“  
 	err = WSAStartup(MAKEWORD(1, 1), &wsaData);
 	if (err != 0)
 	{
-		sLog->OutBug("Ì×½Ó×Ö·şÎñ¶ËÆô¶¯Ê§°Ü,´íÎó´úÂë :%d", GetLastError());
+		sLog->OutBug("å¥—æ¥å­—æœåŠ¡ç«¯å¯åŠ¨å¤±è´¥,é”™è¯¯ä»£ç  :%d", GetLastError());
 		return;
 	}
 
-	//2.´´½¨socket  
-	//Ì×½Ó×ÖÃèÊö·û,SOCKETÊµ¼ÊÉÏÊÇunsigned int  
+	//2.åˆ›å»ºsocket  
+	//å¥—æ¥å­—æè¿°ç¬¦,SOCKETå®é™…ä¸Šæ˜¯unsigned int  
 	SOCKET serverSocket;
 	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (serverSocket == INVALID_SOCKET)
 	{
-		sLog->OutBug("Ì×½Ó×Ö·şÎñ¶ËÆô¶¯Ê§°Ü,´íÎó´úÂë :%d", GetLastError());
+		sLog->OutBug("å¥—æ¥å­—æœåŠ¡ç«¯å¯åŠ¨å¤±è´¥,é”™è¯¯ä»£ç  :%d", GetLastError());
 		return;
 	}
 
 
-	//·şÎñÆ÷¶ËµÄµØÖ·ºÍ¶Ë¿ÚºÅ  
+	//æœåŠ¡å™¨ç«¯çš„åœ°å€å’Œç«¯å£å·  
 	struct sockaddr_in serverAddr, clientAdd;
 	serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
 
-	//3.°ó¶¨Socket£¬½«SocketÓëÄ³¸öĞ­ÒéµÄÄ³¸öµØÖ·°ó¶¨  
+	//3.ç»‘å®šSocketï¼Œå°†Socketä¸æŸä¸ªåè®®çš„æŸä¸ªåœ°å€ç»‘å®š  
 	err = ::bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 	if (err != 0)
 	{
-		sLog->OutBug("Ì×½Ó×Ö·şÎñ¶Ë°ó¶¨Ê§°Ü,´íÎó´úÂë :%d", GetLastError());
+		sLog->OutBug("å¥—æ¥å­—æœåŠ¡ç«¯ç»‘å®šå¤±è´¥,é”™è¯¯ä»£ç  :%d", GetLastError());
 		return;
 	}
 
 
-	//4.¼àÌı,½«Ì×½Ó×ÖÓÉÄ¬ÈÏµÄÖ÷¶¯Ì×½Ó×Ö×ª»»³É±»¶¯Ì×½Ó×Ö  
+	//4.ç›‘å¬,å°†å¥—æ¥å­—ç”±é»˜è®¤çš„ä¸»åŠ¨å¥—æ¥å­—è½¬æ¢æˆè¢«åŠ¨å¥—æ¥å­—  
 	err = listen(serverSocket, 10);
 	if (err != 0)
 	{
-		sLog->OutBug("Ì×½Ó×Ö·şÎñ¶Ë¼àÌıÊ§°Ü,´íÎó´úÂë :%d", GetLastError());
+		sLog->OutBug("å¥—æ¥å­—æœåŠ¡ç«¯ç›‘å¬å¤±è´¥,é”™è¯¯ä»£ç  :%d", GetLastError());
 		return;
 	}
 
-	sLog->OutLog("Ì×½Ó×Ö·şÎñ¶ËÆô¶¯³É¹¦...ÕıÔÚ´´½¨Ïß³Ì...");
+	sLog->OutLog("å¥—æ¥å­—æœåŠ¡ç«¯å¯åŠ¨æˆåŠŸ...æ­£åœ¨åˆ›å»ºçº¿ç¨‹...");
 	int addrLen = sizeof(clientAdd);
 	SOCKET sockConn;
 
 	SocketListVector.clear();
-	sLog->OutWarning("ÍøÂçÏß³ÌÊıÁ¿±»ÉèÖÃÎª£º%d ¸ö", SocketNumber);
+	sLog->OutWarning("ç½‘ç»œçº¿ç¨‹æ•°é‡è¢«è®¾ç½®ä¸ºï¼š%d ä¸ª", SocketNumber);
 	for (int i = 0; i != SocketNumber; i++)
 	{
 		SocketList* socketList = new SocketList(i);
@@ -95,15 +95,15 @@ void WorldSocket::StartUp(bool& Finished)
 		std::thread th(&WorldSocket::StartNewWorkThread, this, socketList);
 		th.detach();
 	}
-	sLog->OutSuccess("ÍøÂçÏß³Ì´´½¨Íê±Ï", SocketNumber);
+	sLog->OutSuccess("ç½‘ç»œçº¿ç¨‹åˆ›å»ºå®Œæ¯•", SocketNumber);
 	Finished = true;
 	while (true)
 	{
-		//5.½ÓÊÕÇëÇó£¬µ±ÊÕµ½ÇëÇóºó£¬»á½«¿Í»§¶ËµÄĞÅÏ¢´æÈëclientAddÕâ¸ö½á¹¹ÌåÖĞ£¬²¢·µ»ØÃèÊöÕâ¸öTCPÁ¬½ÓµÄSocket  
+		//5.æ¥æ”¶è¯·æ±‚ï¼Œå½“æ”¶åˆ°è¯·æ±‚åï¼Œä¼šå°†å®¢æˆ·ç«¯çš„ä¿¡æ¯å­˜å…¥clientAddè¿™ä¸ªç»“æ„ä½“ä¸­ï¼Œå¹¶è¿”å›æè¿°è¿™ä¸ªTCPè¿æ¥çš„Socket  
 		sockConn = accept(serverSocket, (struct sockaddr*)&clientAdd, &addrLen);
 		if (sockConn == INVALID_SOCKET)
 		{
-			sLog->OutBug("Ì×½Ó×Ö·şÎñ¶Ë¼àÌıÊ§°Ü,´íÎó´úÂë :%d", GetLastError());
+			sLog->OutBug("å¥—æ¥å­—æœåŠ¡ç«¯ç›‘å¬å¤±è´¥,é”™è¯¯ä»£ç  :%d", GetLastError());
 			return;
 		}
 		bool AllFull = true;
@@ -117,7 +117,7 @@ void WorldSocket::StartUp(bool& Finished)
 				//struct sockaddr_in sa;
 				//int len = sizeof(sa);
 				//if (!getpeername(sockConn, (sockaddr*)&sa, &len))
-				sLog->OutLog("ĞÂÁ¬½Ó½ÓÈë %d", sockConn);
+				sLog->OutLog("æ–°è¿æ¥æ¥å…¥ %d", sockConn);
 				NewSocketComming(sockConn, i);
 				AllFull = false;
 				break;
@@ -125,25 +125,25 @@ void WorldSocket::StartUp(bool& Finished)
 		}
 
 		if (AllFull)
-			sLog->OutLog("Á¬½ÓÊı´ïµ½ÉÏÏŞ");
-		//½«Ö®Ç°µÄµÚ6²½Ìæ»»³ÉÁËÉÏÃæÆô¶¯workThreadÕâ¸öÏß³Ìº¯ÊıºÍÏÂÃæÕâÒ»ĞĞ´úÂë  
-		//½«socket·ÅÈësocketListÖĞ  
+			sLog->OutLog("è¿æ¥æ•°è¾¾åˆ°ä¸Šé™");
+		//å°†ä¹‹å‰çš„ç¬¬6æ­¥æ›¿æ¢æˆäº†ä¸Šé¢å¯åŠ¨workThreadè¿™ä¸ªçº¿ç¨‹å‡½æ•°å’Œä¸‹é¢è¿™ä¸€è¡Œä»£ç   
+		//å°†socketæ”¾å…¥socketListä¸­  
 	}
 
 	closesocket(serverSocket);
-	//ÇåÀíWindows Socket¿â  
+	//æ¸…ç†Windows Socketåº“  
 	WSACleanup();
 }
 
 void WorldSocket::StartNewWorkThread(SocketList* pList)
 {
-	sLog->OutSuccess("ÍøÂçÏß³Ì¿ªÊ¼Æô¶¯...");
-	//´«µİ½øÀ´µÄsocketListÖ¸Õë  
+	sLog->OutSuccess("ç½‘ç»œçº¿ç¨‹å¼€å§‹å¯åŠ¨...");
+	//ä¼ é€’è¿›æ¥çš„socketListæŒ‡é’ˆ  
 	SocketList* socketList = pList;
 	int ErrorCode = 0;
-	fd_set fdread;//´æÔÚ¶ÁÎÄ¼şµÄset£¬select»á¼ì²âÕâ¸ösetÖĞÊÇ·ñ¿ÉÒÔ´ÓÄ³Ğ©socketÖĞ¶ÁÈëĞÅÏ¢  
+	fd_set fdread;//å­˜åœ¨è¯»æ–‡ä»¶çš„setï¼Œselectä¼šæ£€æµ‹è¿™ä¸ªsetä¸­æ˜¯å¦å¯ä»¥ä»æŸäº›socketä¸­è¯»å…¥ä¿¡æ¯  
 
-	struct timeval timeout;//ÉèÖÃselect³¬Ê±µÄÊ±¼ä  
+	struct timeval timeout;//è®¾ç½®selectè¶…æ—¶çš„æ—¶é—´  
 	timeout.tv_sec = 6;
 	timeout.tv_usec = 0;
 
@@ -153,9 +153,9 @@ void WorldSocket::StartNewWorkThread(SocketList* pList)
 	{
 		socketList->makefd(&fdread);
 		ErrorCode = select(0, &fdread, NULL, NULL, &timeout);
-		if (ErrorCode == 0)//select·µ»Ø0±íÊ¾³¬Ê±
+		if (ErrorCode == 0)//selectè¿”å›0è¡¨ç¤ºè¶…æ—¶
 		{
-			sLog->OutLog("Ïß³Ì %d ÔİÎŞ¿ÉÓÃÊı¾İ°ü½ÓÊÕ", pList->GetPage());
+			sLog->OutLog("çº¿ç¨‹ %d æš‚æ— å¯ç”¨æ•°æ®åŒ…æ¥æ”¶", pList->GetPage());
 			continue;
 		}
 		else if (ErrorCode == -1)
@@ -164,24 +164,29 @@ void WorldSocket::StartNewWorkThread(SocketList* pList)
 		}
 		else
 		{
-			//±éÀúsocketListÖĞµÄÃ¿Ò»¸ösocket£¬²é¿´ÄÇĞ©socketÊÇ¿É¶ÁµÄ£¬´¦Àí¿É¶ÁµÄsocket  
-			//´ÓÖĞ¶ÁÈ¡Êı¾İµ½»º³åÇø£¬²¢·¢ËÍÊı¾İ¸ø¿Í»§¶Ë  
+			//éå†socketListä¸­çš„æ¯ä¸€ä¸ªsocketï¼ŒæŸ¥çœ‹é‚£äº›socketæ˜¯å¯è¯»çš„ï¼Œå¤„ç†å¯è¯»çš„socket  
+			//ä»ä¸­è¯»å–æ•°æ®åˆ°ç¼“å†²åŒºï¼Œå¹¶å‘é€æ•°æ®ç»™å®¢æˆ·ç«¯  
 			for (int i = 0; i < FD_SETSIZE; i++)
 			{
-				//¶ÁÈ¡ÓĞĞ§µÄsocket
+				//è¯»å–æœ‰æ•ˆçš„socket
 				socket = socketList->getSocket(i);
 				char receBuff[4096];
 				if (!socket)
 					continue;
-				//ÅĞ¶ÏÄÄĞ©socketÊÇ¿É¶ÁµÄ£¬Èç¹ûÕâ¸ösocketÊÇ¿É¶ÁµÄ£¬´ÓËüÀïÃæ¶ÁÈ¡Êı¾İ  
+				//åˆ¤æ–­å“ªäº›socketæ˜¯å¯è¯»çš„ï¼Œå¦‚æœè¿™ä¸ªsocketæ˜¯å¯è¯»çš„ï¼Œä»å®ƒé‡Œé¢è¯»å–æ•°æ®  
 				if (FD_ISSET(socket, &fdread))
 				{
 					ErrorCode = recv(socket, receBuff, sizeof(receBuff), 0);
-					//Èç¹û·µ»ØÖµ±íÊ¾Òª¹Ø±ÕÕâ¸öÁ¬½Ó£¬ÄÇÃ´¹Ø±ÕËü£¬²¢½«Ëü´ÓsockeListÖĞÈ¥µô  
+					//å¦‚æœè¿”å›å€¼è¡¨ç¤ºè¦å…³é—­è¿™ä¸ªè¿æ¥ï¼Œé‚£ä¹ˆå…³é—­å®ƒï¼Œå¹¶å°†å®ƒä»sockeListä¸­å»æ‰  
 					if (ErrorCode == 0 || ErrorCode == SOCKET_ERROR)
 					{
+						if (WorldSession * session = sWorld->GetSessionBySocket(socket))
+						{
+							session->Close();
+							continue;
+						}
 						closesocket(socket);
-						sLog->OutLog("¿Í»§¶ËÈ¡ÏûÁ¬½Ó,%u", socket);
+						sLog->OutLog("å®¢æˆ·ç«¯å–æ¶ˆè¿æ¥,%u", socket);
 						socketList->deleteSocket(socket);
 					}
 					else
@@ -238,7 +243,7 @@ SocketList::SocketList(uint8 PageCount) : m_Page(PageCount)
 	ThreadLocker loc(ListLock);
 	num = 0;
 	for (int i = 0; i < FD_SETSIZE; i++)
-		//ÒòÎªsocketµÄÖµÊÇÒ»¸ö·Ç¸ºÕûÊıÖµ£¬ËùÒÔ¿ÉÒÔ½«socketArray³õÊ¼»¯Îª0£¬ÈÃËüÀ´±íÊ¾Êı×éÖĞµÄÕâÒ»¸öÔªËØÓĞÃ»ÓĞ±»Ê¹ÓÃ  
+		//å› ä¸ºsocketçš„å€¼æ˜¯ä¸€ä¸ªéè´Ÿæ•´æ•°å€¼ï¼Œæ‰€ä»¥å¯ä»¥å°†socketArrayåˆå§‹åŒ–ä¸º0ï¼Œè®©å®ƒæ¥è¡¨ç¤ºæ•°ç»„ä¸­çš„è¿™ä¸€ä¸ªå…ƒç´ æœ‰æ²¡æœ‰è¢«ä½¿ç”¨  
 		socketArray[i] = 0;
 }
 
@@ -255,12 +260,12 @@ void SocketList::insertSocket(SOCKET s)
 	ThreadLocker loc(ListLock);
 	for (int i = 0; i < FD_SETSIZE; i++)
 	{
-		//Èç¹ûÄ³Ò»¸ösocketArray[i]Îª0£¬±íÊ¾ÄÄÒ»¸öÎ»¿ÉÒÔ·ÅÈësocket
+		//å¦‚æœæŸä¸€ä¸ªsocketArray[i]ä¸º0ï¼Œè¡¨ç¤ºå“ªä¸€ä¸ªä½å¯ä»¥æ”¾å…¥socket
 		if (socketArray[i] == 0)
 		{
 			socketArray[i] = s;
 			num++;
-			break;//ÕâÀïÒ»¶¨Òª¼ÓÉÏbreak£¬²»È»Ò»¸ösocket»á·ÅÔÚsocketArrayµÄ¶à¸öÎ»ÖÃÉÏ  
+			break;//è¿™é‡Œä¸€å®šè¦åŠ ä¸Šbreakï¼Œä¸ç„¶ä¸€ä¸ªsocketä¼šæ”¾åœ¨socketArrayçš„å¤šä¸ªä½ç½®ä¸Š  
 		}
 	}
 }
@@ -274,7 +279,7 @@ void SocketList::deleteSocket(SOCKET s)
 		{
 			socketArray[i] = 0;
 			num--;
-			sLog->OutLog("ÒÆ³ı¿Í»§¶Ë %d, Ä¿Ç°ÈİÁ¿ %d", s, FD_SETSIZE - num);
+			sLog->OutLog("ç§»é™¤å®¢æˆ·ç«¯ %d, ç›®å‰å®¹é‡ %d", s, FD_SETSIZE - num);
 			return;
 		}
 	}
@@ -283,8 +288,8 @@ void SocketList::deleteSocket(SOCKET s)
 void SocketList::makefd(fd_set* fd_list)
 {
 	ThreadLocker loc(ListLock);
-	FD_ZERO(fd_list);//Ê×ÏÈ½«fd_listÇå0  
-					 //½«Ã¿Ò»¸ösocket¼ÓÈëfd_listÖĞ  
+	FD_ZERO(fd_list);//é¦–å…ˆå°†fd_listæ¸…0  
+					 //å°†æ¯ä¸€ä¸ªsocketåŠ å…¥fd_listä¸­  
 	for (int i = 0; i < FD_SETSIZE; i++)
 		if (socketArray[i]>0)
 			FD_SET(socketArray[i], fd_list);

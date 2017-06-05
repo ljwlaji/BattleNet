@@ -41,7 +41,7 @@ void WorldSession::Update(const uint32& diff)
 	while (m_Socket && !m_Closing && ++packetsThisCycle <= 20)
 	{
 		WorldPacket* packet = GetNextPacket();
-		if (!packet)
+		if (!packet || !packet->size())
 			continue;
 		OpcodeHandler const& opHandle = opcodeTable[packet->GetOpcode()];
 		ExecuteOpcode(opHandle, packet);
@@ -158,11 +158,26 @@ WorldPacket* WorldSession::GetNextPacket()
 		return nullptr;
 
 	std::list<const char*>::iterator itr = m_Packet_Queue.begin();
-	uint16 Lenth = *((uint16*)*itr) - 8;
+	uint16 TotalSize = *((uint16*)*itr);
+	if (TotalSize < 6 || TotalSize > 200)
+	{
+		sLog->OutBug("UnKnow Packet From %d", m_Socket);
+		PopPacket();
+		return nullptr;
+	}
+	uint16 PacketLenth = *((uint16*)*itr) - 6;
 	uint16 Opcode = *((uint16*)(*itr + 4));
-	WorldPacket * pck = new WorldPacket(Opcode, Lenth);
-	pck->resize(Lenth);
-	pck->put(0, (const unsigned char*)*itr + 8, Lenth);
+	WorldPacket * pck = new WorldPacket(Opcode, PacketLenth);
+	pck->resize(PacketLenth);
+	if (PacketLenth)
+		pck->put(0, (const unsigned char*)*itr + 6, PacketLenth);
+	else
+	{
+		sLog->OutBug("Socket %d Sended An Empty Packet", m_Socket);
+		PopPacket();
+		delete pck;
+		return nullptr;
+	}
 	PopPacket();
 	return pck;
 }
