@@ -95,6 +95,38 @@ void WorldSession::HandlePlayerGetDataOpcode(WorldPacket& /*recvPacket*/)
 	SendPacket(&packet);
 }
 
+void WorldSession::HandleRequireNewsDataOpcode(WorldPacket & RecvPacket)
+{
+	uint16 MessageNumber = 0;
+	RecvPacket >> MessageNumber;
+	WorldPacket packet(SMSG_NEWS_REQUIRE);
+	uint32 Success = 0;
+	if (const NewInfoTemplate* Template = sWorld->GetNewsInfo(MessageNumber))
+	{
+		Success = 1;
+		packet << Success;
+		packet << (uint32)Template->Time;
+		packet << (std::string)Template->Title;
+		packet << (std::string)Template->Message;
+	}
+	else
+	{
+		packet << Success;
+	}
+
+	SendPacket(&packet);
+}
+
+void WorldSession::HandleRequireActionDataOpcode(WorldPacket & /*packet*/)
+{
+	WorldPacket packet(SMSG_ACTIONS_REQUIRE);
+	if (const std::list<std::string>* info = sWorld->GetActionInfo())
+		for (std::list<std::string>::const_iterator itr = info->begin(); itr != info->end(); itr++)
+			packet << (*itr);
+
+	SendPacket(&packet);
+}
+
 void WorldSession::HandleAuthLoginOpcode(WorldPacket & recvPacket)
 {
 	if (BattleNetAccount)

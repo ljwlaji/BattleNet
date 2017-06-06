@@ -4,6 +4,13 @@
 
 #define sWorld World::GetInstance()
 
+struct NewInfoTemplate
+{
+	std::string Title;
+	uint32 Time;
+	std::string Message;
+};
+
 struct GuildTemplate
 {
 	uint32 guildid;
@@ -67,6 +74,8 @@ public:
 	WorldSession* GetSessionBySocket(const uint32& Socket);
 	SingleBattleNetAccount* GetBattleNetInfo(const uint32& account_id);
 	const GuildTemplate* GetGuildInfoById(const uint32& guid_id);
+	const NewInfoTemplate* GetNewsInfo(const uint32& Number);
+	const std::list<std::string>* GetActionInfo();
 private:
 	World();
 	~World();
@@ -74,6 +83,8 @@ private:
 	void LoadItemTemplate();
 	void LoadAuctionTemplate();
 	void LoadGuildMemberTemplate();
+	void LoadNewsTemplate();
+	void LoadActionTemplate();
 public:
 	void update(const uint32& diff);
 
@@ -85,7 +96,9 @@ private:
 	std::map<uint32, ItemTemplate> m_ItemTemplatMap;
 	std::map<uint32, AuctionItem> m_AcutionMap;
 	std::map<uint32, GuildTemplate> m_GuidMap;
+	std::map<uint32, NewInfoTemplate> m_NewsTemplate;
 	std::list<SessionMap::iterator> RemoveItr;
+	std::list<std::string> m_ActionImageList;
 };
 
 #endif

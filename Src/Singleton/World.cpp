@@ -25,6 +25,10 @@ void World::OnStart()
 	LoadAuctionTemplate();
 	sLog->OutWarning("读取工会信息...");
 	LoadGuildMemberTemplate();
+	sLog->OutWarning("读取新闻信息...");
+	LoadNewsTemplate();
+	sLog->OutWarning("读取活动信息...");
+	LoadActionTemplate();
 	sLog->OutSuccess("世界信息读取完毕...");
 	sLog->OutWarning("***************************************************************************");
 }
@@ -140,6 +144,46 @@ void World::LoadGuildMemberTemplate()
 		sLog->OutBug("Load Template Error On void World::LoadGuildMemberTemplate()");
 }
 
+void World::LoadNewsTemplate()
+{
+	m_NewsTemplate.clear();
+	Result _res;
+	int k = 0;
+	if (sDataBase->GetResult(WorldDataBase, _res, "SELECT time,title,text FROM playfun_battlenet_news"))
+	{
+		std::vector<RowInfo> _SingleLine;
+		for (Result::iterator itr = _res.begin(); itr != _res.end(); itr++)
+		{
+			_SingleLine = itr->second;
+			NewInfoTemplate _NewInfoTemplate;
+			_NewInfoTemplate.Time						= _SingleLine.at(0).GetInt();
+			_NewInfoTemplate.Title						= _SingleLine.at(1).GetString();
+			_NewInfoTemplate.Message					= _SingleLine.at(2).GetString();
+			m_NewsTemplate[k++]							= _NewInfoTemplate;
+		}
+		sLog->OutSuccess("读取 %d 件新闻信息", _res.size());
+	}
+	else
+		sLog->OutBug("Load Template Error On void World::LoadNewsTemplate()");
+}
+
+void World::LoadActionTemplate()
+{
+	m_ActionImageList.clear();
+	Result _res;
+	int k = 0;
+	if (sDataBase->GetResult(WorldDataBase, _res, "SELECT url FROM playfun_battlenet_actions"))
+	{
+		for (Result::iterator itr = _res.begin(); itr != _res.end(); itr++)
+		{
+			m_ActionImageList.push_back(itr->second.at(0).GetString());
+		}
+		sLog->OutSuccess("读取 %d 件活动信息", _res.size());
+	}
+	else
+		sLog->OutBug("Load Template Error On void World::LoadActionTemplate()");
+}
+
 WorldSession* World::CreateSessionForNewSocket(const uint32 & Socket, std::string& address, const uint8& SocketPage)
 {
 	WorldSession* NewSession = nullptr;
@@ -164,6 +208,20 @@ const GuildTemplate* World::GetGuildInfoById(const uint32& guid_id)
 	if (m_GuidMap.find(guid_id) != m_GuidMap.end())
 		return &m_GuidMap[guid_id];
 	return nullptr;
+}
+
+const NewInfoTemplate* World::GetNewsInfo(const uint32 & Number)
+{
+	if (m_NewsTemplate.find(Number) != m_NewsTemplate.end())
+		return &m_NewsTemplate[Number];
+	return nullptr;
+}
+
+const std::list<std::string>* World::GetActionInfo()
+{
+	if (m_ActionImageList.empty())
+		return nullptr;
+	return &m_ActionImageList;
 }
 
 SingleBattleNetAccount* World::GetBattleNetInfo(const uint32 & account_id)

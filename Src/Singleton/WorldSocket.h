@@ -12,7 +12,7 @@
 #include "Common.h"
 
 #define sWorldSocket WorldSocket::GetInstance()
-#define SERVER_IP "192.168.0.101"
+#define SERVER_IP "192.168.1.6"
 #define SERVER_PORT 6000
 
 class SocketList

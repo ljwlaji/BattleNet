@@ -30,5 +30,9 @@ OpcodeHandler opcodeTable[NUM_MSG_TYPES] =
 	/*0x000*/{ "SMGS_AUTH_DATA_RESULT",		STATUS_AUTHED,		&WorldSession::Handle_NULL },
 	/*0x000*/{ "CMSG_MESSAGE_CHAT",			STATUS_AUTHED,		&WorldSession::Handle_NULL },
 	/*0x000*/{ "SMSG_MESSAGE_CHAT",			STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x000*/{ "CMSG_NEWS_REQUIRE",			STATUS_AUTHED,		&WorldSession::HandleRequireNewsDataOpcode },
+	/*0x000*/{ "SMSG_NEWS_REQUIRE",			STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x011*/{ "CMSG_ACTIONS_REQUIRE",		STATUS_AUTHED,		&WorldSession::HandleRequireActionDataOpcode },
+	/*0x012*/{ "SMSG_ACTIONS_REQUIRE",		STATUS_AUTHED,		&WorldSession::Handle_NULL },
 };
 

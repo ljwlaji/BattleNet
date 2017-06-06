@@ -228,7 +228,7 @@ void WorldSocket::CloseSocket(const SOCKET & pSocket, const uint8& socketpage)
 
 void WorldSocket::RecvPacket(const SOCKET& pSocket, const char * buff)
 {
-	uint16 Opcode = *((uint8*)(buff + 4));
+	uint16 Opcode = *((uint16*)(buff + 4));
 	if (!Opcode || Opcode > 0x424)
 		return;
 	ThreadLocker loc(SocketMapLock);

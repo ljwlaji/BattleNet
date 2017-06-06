@@ -57,6 +57,8 @@ public:
 	void HandleAuthLoginOpcode(WorldPacket& recvPacket);
 	void HandleClientHeartBeatOpcode(WorldPacket& /*packet*/) {}
 	void HandlePlayerGetDataOpcode(WorldPacket& /*recvPacket*/);
+	void HandleRequireNewsDataOpcode(WorldPacket& packet);
+	void HandleRequireActionDataOpcode(WorldPacket& /*packet*/);
 };
 #endif
 

@@ -8,3 +8,4 @@ BattleNet/BattleNet.vcxproj.user
 BattleNet/Debug/
 BattleNet/x64/
 bin/
+.vs/config/applicationhost.config
