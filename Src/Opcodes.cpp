@@ -28,11 +28,15 @@ OpcodeHandler opcodeTable[NUM_MSG_TYPES] =
 	/*0x000*/{ "SMSG_LOGIN_RESULT",         STATUS_AUTHED,		&WorldSession::Handle_NULL },
 	/*0x000*/{ "CMSG_AUTH_DATA_RESULT",		STATUS_AUTHED,		&WorldSession::HandlePlayerGetDataOpcode },
 	/*0x000*/{ "SMGS_AUTH_DATA_RESULT",		STATUS_AUTHED,		&WorldSession::Handle_NULL },
-	/*0x000*/{ "CMSG_MESSAGE_CHAT",			STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x000*/{ "CMSG_MESSAGE_CHAT",			STATUS_AUTHED,		&WorldSession::HandleMessageChatOpcode },
 	/*0x000*/{ "SMSG_MESSAGE_CHAT",			STATUS_AUTHED,		&WorldSession::Handle_NULL },
 	/*0x000*/{ "CMSG_NEWS_REQUIRE",			STATUS_AUTHED,		&WorldSession::HandleRequireNewsDataOpcode },
 	/*0x000*/{ "SMSG_NEWS_REQUIRE",			STATUS_AUTHED,		&WorldSession::Handle_NULL },
 	/*0x011*/{ "CMSG_ACTIONS_REQUIRE",		STATUS_AUTHED,		&WorldSession::HandleRequireActionDataOpcode },
 	/*0x012*/{ "SMSG_ACTIONS_REQUIRE",		STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x013*/{ "CMSG_AUCTION_LIST_ITEM",	STATUS_AUTHED,		&WorldSession::HandleAuctionHouseListItemOpcode },
+	/*0x014*/{ "SMSG_AUCTION_LIST_ITEM",	STATUS_AUTHED,		&WorldSession::Handle_NULL },
+	/*0x015*/{ "CMSG_AUCTION_BUY_ITEM",		STATUS_AUTHED,		&WorldSession::HandleAuctionHouseBuyItemOpcode },
+	/*0x016*/{ "SMSG_AUCTION_BUY_ITEM",		STATUS_AUTHED,		&WorldSession::Handle_NULL },
 };
 

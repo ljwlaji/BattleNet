@@ -5,6 +5,7 @@
 #include "Log.h"
 #include "World.h"
 #include "DataBase.h"
+#include "Chat.h"
 //int Worldsession::SendPacket(const WorldPacket* packet)
 //{
 //	char send_buffer[1024];
@@ -17,7 +18,7 @@
 //	return 0;
 //}
 
-WorldSession::WorldSession(const uint32& _Socket, const std::string& Address, const uint8& SockePage) : m_Socket(_Socket), m_Player(nullptr), m_Address(Address), m_Closing(false), m_SocketPage(SockePage), BattleNetAccount(0), OutPingCount(0),LastPacketTime(time(NULL))
+WorldSession::WorldSession(const uint32& _Socket, const std::string& Address, const uint8& SockePage) : m_Socket(_Socket), m_Player(nullptr), m_Address(Address), m_Closing(false), m_SocketPage(SockePage), BattleNetAccount(0), OutPingCount(0),LastPacketTime(time(NULL)), m_GuildId(0)
 {
 	sLog->OutLog("Create New Session");
 }
@@ -60,6 +61,19 @@ void WorldSession::Handle_NULL(WorldPacket & recvPacket)
 
 }
 
+void WorldSession::HandleMessageChatOpcode(WorldPacket & RecvPacket)
+{
+	std::string SenderName = "";
+	uint32 Channel = Whisper_Channel;
+	std::string Message = "";
+	uint32 RecvPlayer = 0;
+	RecvPacket >> SenderName;
+	RecvPacket >> Channel;
+	RecvPacket >> Message;
+
+	sChat->HandleMessageInPut(SenderName, (BattleNet_Message_Channel)Channel, Message, RecvPlayer, m_GuildId);
+}
+
 void WorldSession::HandlePlayerGetDataOpcode(WorldPacket& /*recvPacket*/)
 {
 	WorldPacket packet(SMGS_AUTH_DATA_RESULT,4 * 5 + 40);
@@ -84,6 +98,11 @@ void WorldSession::HandlePlayerGetDataOpcode(WorldPacket& /*recvPacket*/)
 				Level	= ReInfo.at(4).GetInt();
 				Money	= ReInfo.at(5).GetInt();
 			}
+			_res.clear();
+			if (sDataBase->GetResult(CharacterDataBase, _res, "SELECT guildid FROM guild_member WHERE guid = %d", AccountInfo->CharacterToShow) && !_res.empty())
+			{
+				m_GuildId = _res.begin()->second.at(0).GetInt();
+			}
 		}
 	}
 	packet << Name;
@@ -92,6 +111,7 @@ void WorldSession::HandlePlayerGetDataOpcode(WorldPacket& /*recvPacket*/)
 	packet << Gender;
 	packet << Level;
 	packet << Money;
+	packet << m_GuildId;
 	SendPacket(&packet);
 }
 
@@ -125,6 +145,84 @@ void WorldSession::HandleRequireActionDataOpcode(WorldPacket & /*packet*/)
 			packet << (*itr);
 
 	SendPacket(&packet);
+}
+
+void WorldSession::HandleAuctionHouseListItemOpcode(WorldPacket & packet)
+{
+	//for (int i = 34424; i != 40000; i++)
+	//{
+	//	if (const ItemTemplate* TempTemplate = sWorld->GetItemTemplate(i))
+	//	{
+	//		std::string url = sWorld->GetItemUrl(TempTemplate->DisPlayid).c_str();
+	//		WorldPacket packet(SMSG_INSERT_ICON);
+	//		packet << TempTemplate->Entry;
+	//		packet << (std::string)url;
+	//		SendPacket(&packet);
+	//		Sleep(40);
+	//	}
+	//}
+	uint32 TeamID = 0;
+	uint32 PageID = 0;
+	std::string Item = "";
+	packet >> TeamID;
+	packet >> PageID;
+	packet >> Item;
+
+	if (!PageID)
+		return;
+
+	std::map<uint32, AuctionItem> result;
+	uint32 ItemCount = sWorld->GetAuctionItems(TeamID, PageID, result, Item);
+
+	WorldPacket Sendpacket(SMSG_AUCTION_LIST_ITEM);
+	if (!result.size())
+	{
+		Sendpacket << (uint32)ListFailded;
+		SendPacket(&Sendpacket);
+		return;
+	}
+
+	Sendpacket << (uint32)ListSuccess;
+	Sendpacket << (uint32)ItemCount;
+
+	for (std::map<uint32, AuctionItem>::iterator itr = result.begin(); itr != result.end(); itr++)
+	{
+		AuctionItem SingleAuctionItem = itr->second;
+		Sendpacket << (uint32)SingleAuctionItem.id;
+		Sendpacket << (uint32)SingleAuctionItem.item_template;
+		//Result _result;
+		//sDataBase->GetResult(CharacterDataBase, _result, "SELECT name FROM characters WHERE guid = %d", itr->second.item_owner);
+		//if (!_result.empty())
+		//	Sendpacket << (std::string)_result.begin()->second.at(0).GetString();
+		//else
+		//	Sendpacket << (std::string)"null";
+
+
+		//Sendpacket << (uint32)SingleAuctionItem.houseid;
+		//Sendpacket << (std::string)sWorld->GetItemLocalString(SingleAuctionItem.item_template)->Name_Chinese_Normal;
+		Sendpacket << (uint32)SingleAuctionItem.buyout_price;
+		//Sendpacket << (uint32)SingleAuctionItem.time;
+		Sendpacket << (uint32)SingleAuctionItem.last_bid;
+		//Sendpacket << (uint32)SingleAuctionItem.start_bid;
+	}
+	SendPacket(&Sendpacket);
+}
+
+void WorldSession::HandleAuctionHouseBuyItemOpcode(WorldPacket & packet)
+{
+	if (SingleBattleNetAccount* AccountInfo = sWorld->GetBattleNetInfo(BattleNetAccount))
+	{
+		if (AccountInfo->CharacterToShow)
+		{
+			uint32 AuctionID = 0;
+			uint32 Price = 0;
+			uint32 TeamID = 0;
+			packet >> AuctionID;
+			packet >> Price;
+			packet >> TeamID;														//		0		1			2		3				4		5		
+			sDataBase->PExcude(CharacterDataBase, "INSERT INTO playfun_battle_net_auction(team_id,auctionid,bidsocket,bidplayerguid,bidprice,status) VALUES(%d,%d,%d,%d,%d,%d)", TeamID, AuctionID, m_Socket, AccountInfo->CharacterToShow, Price, 0);
+		}
+	}
 }
 
 void WorldSession::HandleAuthLoginOpcode(WorldPacket & recvPacket)

@@ -72,6 +72,11 @@ void Chat::Update(const uint32 & diff)
 	else ChatResultDelay -= diff;
 }
 
+void Chat::HandleMessageInPut(const std::string & SenderName, BattleNet_Message_Channel _channel, const std::string & Message, uint32 RecvPlayer,uint32 guildid)
+{
+	sDataBase->PExcude(CharacterDataBase, "INSERT INTO playfun_message_in_put(sender_battle_name,channel,recv_player_guid,message,date,status,guild_id) VALUES('%s',%d,%d,'%s',%d,0,%d)", SenderName.c_str(), (int)_channel, RecvPlayer, Message.c_str(), time(NULL), guildid);
+}
+
 Chat::Chat()
 {
 

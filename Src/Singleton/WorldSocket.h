@@ -12,8 +12,6 @@
 #include "Common.h"
 
 #define sWorldSocket WorldSocket::GetInstance()
-#define SERVER_IP "192.168.1.6"
-#define SERVER_PORT 6000
 
 class SocketList
 {
@@ -58,6 +56,8 @@ private:
 	std::map<SOCKET, WorldSession*> SocketMap;
 	mutex SocketMapLock;
 	uint8 SocketNumber;
+	std::string ServerIp;
+	uint16 ServerPort;
 };
 
 #endif

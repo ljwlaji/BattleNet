@@ -25,11 +25,11 @@ public:
 	static Chat* GetInstance();
 	void OnStart();
 	void Update(const uint32& diff);
+	void HandleMessageInPut(const std::string& SenderName, BattleNet_Message_Channel _channel, const std::string& Message, uint32 RecvPlayer = 0, uint32 guildid = 0);
 private:
 	Chat();
 	~Chat();
 	void HandleChatOutPut();
-
 	uint32 ChatResultDelay;
 	uint32 CurrentDelay;
 	Result _res;

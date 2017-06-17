@@ -4,6 +4,17 @@
 
 #define sWorld World::GetInstance()
 
+struct Local_Item_String
+{
+	std::string Name_Korean;
+	std::string Name_France;
+	std::string Name_German;
+	std::string Name_Chinese_Normal;
+	std::string Name_Chinese_Traditional;
+	std::string Name_Spanish;
+	std::string Name_Russan;
+};
+
 struct NewInfoTemplate
 {
 	std::string Title;
@@ -20,6 +31,7 @@ struct GuildTemplate
 	uint32 motd;
 	uint32 createdate;
 };
+
 struct AuctionItem
 {
 	uint32 id;
@@ -40,7 +52,7 @@ struct ItemTemplate
 	uint32 Entry;
 	uint32 Class;
 	uint32 Subclass;
-	uint32 Name;
+	std::string Name;
 	uint8  Quality;
 	uint32 BuyPrice;
 	uint32 SellPrice;
@@ -49,6 +61,7 @@ struct ItemTemplate
 	uint32 AllowableRace;
 	uint32 ItemLevel;
 	uint32 RequiredLevel;
+	uint32 DisPlayid;
 };
 class WorldSession;
 
@@ -75,13 +88,18 @@ public:
 	SingleBattleNetAccount* GetBattleNetInfo(const uint32& account_id);
 	const GuildTemplate* GetGuildInfoById(const uint32& guid_id);
 	const NewInfoTemplate* GetNewsInfo(const uint32& Number);
+	const ItemTemplate* GetItemTemplate(const uint32& ItemEntry);
 	const std::list<std::string>* GetActionInfo();
+	const Local_Item_String* GetItemLocalString(const uint32& ItemEntry);
+	std::string GetItemUrl(const uint32& ItemEntry);
+	uint32 GetAuctionItems(uint32 Teamid, uint32 PageId, std::map<uint32, AuctionItem>& TempMap, std::string& ItemName);
 private:
 	World();
 	~World();
+	void LoadItemDisplayInfo();
+	void LoadLocalItemStrings();
 	void LoadBattleNetAccounts();
 	void LoadItemTemplate();
-	void LoadAuctionTemplate();
 	void LoadGuildMemberTemplate();
 	void LoadNewsTemplate();
 	void LoadActionTemplate();
@@ -97,6 +115,8 @@ private:
 	std::map<uint32, AuctionItem> m_AcutionMap;
 	std::map<uint32, GuildTemplate> m_GuidMap;
 	std::map<uint32, NewInfoTemplate> m_NewsTemplate;
+	std::map<uint32, Local_Item_String> m_LocalItemStrings;
+	std::map<uint32, std::string> m_ItemDisplayInfo;
 	std::list<SessionMap::iterator> RemoveItr;
 	std::list<std::string> m_ActionImageList;
 };

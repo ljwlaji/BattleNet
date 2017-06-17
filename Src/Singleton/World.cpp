@@ -21,14 +21,16 @@ void World::OnStart()
 	LoadBattleNetAccounts();
 	sLog->OutWarning("读取物品信息...");
 	LoadItemTemplate();
-	sLog->OutWarning("读取拍卖行信息...");
-	LoadAuctionTemplate();
 	sLog->OutWarning("读取工会信息...");
 	LoadGuildMemberTemplate();
 	sLog->OutWarning("读取新闻信息...");
 	LoadNewsTemplate();
 	sLog->OutWarning("读取活动信息...");
 	LoadActionTemplate();
+	sLog->OutWarning("读取语言库信息...");
+	LoadLocalItemStrings();
+	sLog->OutWarning("读取物品图标信息...");
+	LoadItemDisplayInfo();
 	sLog->OutSuccess("世界信息读取完毕...");
 	sLog->OutWarning("***************************************************************************");
 }
@@ -61,8 +63,8 @@ void World::LoadBattleNetAccounts()
 void World::LoadItemTemplate()
 {
 	m_ItemTemplatMap.clear();
-	Result _res;//											0	  1		 2		3		4		5		6			7				8			9				10			11
-	if (sDataBase->GetResult(WorldDataBase, _res, "SELECT entry,class,subclass,name,Quality,BuyPrice,SellPrice,InventoryType,AllowableClass,AllowableRace,ItemLevel,RequiredLevel FROM item_template"))
+	Result _res;//											0	  1		 2		3		4		5		6			7				8			9				10		11
+	if (sDataBase->GetResult(WorldDataBase, _res, "SELECT entry,class,subclass,name,Quality,BuyPrice,SellPrice,InventoryType,AllowableClass,ItemLevel,RequiredLevel,displayid FROM item_template"))
 	{
 		std::vector<RowInfo> _SingleLine;
 		for (Result::iterator itr = _res.begin(); itr != _res.end(); itr++)
@@ -72,7 +74,7 @@ void World::LoadItemTemplate()
 			_ItemTemplate.Entry						= _SingleLine.at(0).GetInt();
 			_ItemTemplate.Class						= _SingleLine.at(1).GetInt();
 			_ItemTemplate.Subclass					= _SingleLine.at(2).GetInt();
-			_ItemTemplate.Name						= _SingleLine.at(3).GetInt();
+			_ItemTemplate.Name						= _SingleLine.at(3).GetString();
 			_ItemTemplate.Quality					= _SingleLine.at(4).GetInt();
 			_ItemTemplate.BuyPrice					= _SingleLine.at(5).GetInt();
 			_ItemTemplate.SellPrice					= _SingleLine.at(6).GetInt();
@@ -80,6 +82,7 @@ void World::LoadItemTemplate()
 			_ItemTemplate.AllowableClass			= _SingleLine.at(8).GetInt();
 			_ItemTemplate.ItemLevel					= _SingleLine.at(9).GetInt();
 			_ItemTemplate.RequiredLevel				= _SingleLine.at(10).GetInt();
+			_ItemTemplate.DisPlayid					= _SingleLine.at(11).GetInt();
 			m_ItemTemplatMap[_ItemTemplate.Entry]	= _ItemTemplate;
 		}
 		sLog->OutSuccess("读取 %d 件物品", _res.size());
@@ -88,35 +91,76 @@ void World::LoadItemTemplate()
 		sLog->OutBug("Load Template Error On void World::LoadItemTemplate()");
 }
 
-void World::LoadAuctionTemplate()
+uint32 World::GetAuctionItems(uint32 Teamid, uint32 PageId, std::map<uint32, AuctionItem>& TempMap, std::string& ItemName)
 {
-	m_AcutionMap.clear();
+	// human 1 
+	// Alliance Generic 2
+	// n-elf 3
 
+	// orc, and generic for horde 6
+	// trolls 5
+	// undead 4
+
+	// booty bay, neutral 7
+	// gadgetzan, neutral 7
+	// everlook, neutral 7
+	TempMap.clear();
 	Result _res;//											   0	1		2			3			4			5		6	7		8		9		  10
-	if (sDataBase->GetResult(CharacterDataBase, _res, "SELECT id,houseid,itemguid,item_template,itemowner,buyoutprice,time,buyguid,lastbid,startbid,deposit FROM auction"))
+	switch (Teamid)
 	{
-		std::vector<RowInfo> _SingleLine;
-		for (Result::iterator itr = _res.begin(); itr != _res.end(); itr++)
-		{
-			_SingleLine = itr->second;
-			AuctionItem _AuctionItem;
-			_AuctionItem.id					= _SingleLine.at(0).GetInt();
-			_AuctionItem.houseid			= _SingleLine.at(1).GetInt();
-			_AuctionItem.itemguid			= _SingleLine.at(2).GetInt();
-			_AuctionItem.item_template		= _SingleLine.at(3).GetInt();
-			_AuctionItem.item_owner			= _SingleLine.at(4).GetInt();
-			_AuctionItem.buyout_price		= _SingleLine.at(5).GetInt();
-			_AuctionItem.time				= _SingleLine.at(6).GetInt();
-			_AuctionItem.buy_guid			= _SingleLine.at(7).GetInt();
-			_AuctionItem.last_bid			= _SingleLine.at(8).GetInt();
-			_AuctionItem.start_bid			= _SingleLine.at(9).GetInt();
-			_AuctionItem.deposit			= _SingleLine.at(10).GetInt();
-			m_AcutionMap[_AuctionItem.id]	= _AuctionItem;
-		}
-		sLog->OutSuccess("读取 %d 件拍卖信息", _res.size());
+	case 469: //ALL
+		sDataBase->GetResult(CharacterDataBase, _res, "SELECT id,houseid,itemguid,item_template,itemowner,buyoutprice,time,buyguid,lastbid,startbid FROM auction WHERE houseid in (1,2,3) ORDER BY id");
+		break;
+	case 67://Horde
+		sDataBase->GetResult(CharacterDataBase, _res, "SELECT id,houseid,itemguid,item_template,itemowner,buyoutprice,time,buyguid,lastbid,startbid FROM auction WHERE houseid in (4,5,6) ORDER BY id");
+		break;
+	default:
+		sDataBase->GetResult(CharacterDataBase, _res, "SELECT id,houseid,itemguid,item_template,itemowner,buyoutprice,time,buyguid,lastbid,startbid FROM auction WHERE houseid = 7 ORDER BY id");
+		break;
 	}
-	else
-		sLog->OutBug("Load Template Error On void World::LoadAuctionTemplate()");
+	std::vector<RowInfo> _SingleLine;
+	uint32 ResultItem = 0;
+	uint32 CurrentPos = 0;
+	uint32 ItemNumber = 0;
+	uint32 StartPos = (PageId - 1) * 5;
+	for (Result::iterator itr = _res.begin(); itr != _res.end(); itr++)
+	{
+		_SingleLine = itr->second;
+		if (!ItemName.empty())
+		{
+			const Local_Item_String* Template = GetItemLocalString(_SingleLine.at(3).GetInt());
+			//判断玩家地区信息
+			if (!Template || Template->Name_Chinese_Normal != ItemName)
+				continue;
+		}
+		ItemNumber++;
+		if (CurrentPos++ < StartPos || ResultItem++ >= 5)
+			continue;
+		AuctionItem _AuctionItem;
+		_AuctionItem.id				= _SingleLine.at(0).GetInt();
+		_AuctionItem.item_template	= _SingleLine.at(3).GetInt();
+		_AuctionItem.buyout_price	= _SingleLine.at(5).GetInt();
+		_AuctionItem.last_bid		= _SingleLine.at(8).GetInt();
+		TempMap[_AuctionItem.id]	= _AuctionItem;
+		//}
+		//else
+		//{
+		//	ItemNumber++;
+		//	if (ResultItem >= 5)
+		//		break;
+		//	if (CurrentPos++ < (PageId - 1) * 5)
+		//		continue;
+		//
+		//	AuctionItem _AuctionItem;
+		//	_AuctionItem.id					= _SingleLine.at(0).GetInt();
+		//	_AuctionItem.item_template		= _SingleLine.at(3).GetInt();
+		//	_AuctionItem.buyout_price		= _SingleLine.at(5).GetInt();
+		//	_AuctionItem.last_bid			= _SingleLine.at(8).GetInt();
+		//	TempMap[_AuctionItem.id]		= _AuctionItem;
+		//	ResultItem++;
+		//}
+	}
+	return ItemName.empty() ? _res.size() : ItemNumber;
 }
 
 void World::LoadGuildMemberTemplate()
@@ -217,11 +261,32 @@ const NewInfoTemplate* World::GetNewsInfo(const uint32 & Number)
 	return nullptr;
 }
 
+const ItemTemplate * World::GetItemTemplate(const uint32 & ItemEntry)
+{
+	if (m_ItemTemplatMap.empty() || m_ItemTemplatMap.find(ItemEntry) == m_ItemTemplatMap.end())
+		return nullptr;
+	return &m_ItemTemplatMap[ItemEntry];
+}
+
 const std::list<std::string>* World::GetActionInfo()
 {
 	if (m_ActionImageList.empty())
 		return nullptr;
 	return &m_ActionImageList;
+}
+
+const Local_Item_String * World::GetItemLocalString(const uint32 & ItemEntry)
+{
+	if (m_LocalItemStrings.find(ItemEntry) != m_LocalItemStrings.end())
+		return &m_LocalItemStrings[ItemEntry];
+	return nullptr;
+}
+
+std::string World::GetItemUrl(const uint32 & ItemEntry)
+{
+	if (m_ItemDisplayInfo.find(ItemEntry) != m_ItemDisplayInfo.end())
+		return m_ItemDisplayInfo[ItemEntry];
+	return "";
 }
 
 SingleBattleNetAccount* World::GetBattleNetInfo(const uint32 & account_id)
@@ -264,4 +329,47 @@ World::World()
 World::~World()
 {
 	_World = nullptr;
+}
+
+void World::LoadItemDisplayInfo()
+{
+	m_ItemDisplayInfo.clear();
+	Result _res;
+				//											0		1
+	if (sDataBase->GetResult(WorldDataBase, _res, "SELECT field0,field5 FROM item_display_info"))
+	{
+		std::vector<RowInfo> _SingleLine;
+		for (Result::iterator itr = _res.begin(); itr != _res.end(); itr++)
+			m_ItemDisplayInfo[itr->second.at(0).GetInt()] = itr->second.at(1).GetString();
+		sLog->OutSuccess("读取 %d 条物品图标信息", _res.size());
+	}
+	else
+		sLog->OutBug("Load Template Error On void World::LoadItemDisplayInfo()");
+}
+
+void World::LoadLocalItemStrings()
+{
+	m_LocalItemStrings.clear();
+	Result _res;
+	int k = 0;//											0		1			2		3		4			5			6		7		8			9
+	if (sDataBase->GetResult(WorldDataBase, _res, "SELECT entry,name_loc1,name_loc2,name_loc3,name_loc4,name_loc5,name_loc6,name_loc7,name_loc8,description_loc1 FROM locales_item"))
+	{
+		std::vector<RowInfo> _SingleLine;
+		for (Result::iterator itr = _res.begin(); itr != _res.end(); itr++)
+		{
+			_SingleLine = itr->second;
+			Local_Item_String _Local_Item_String;
+			_Local_Item_String.Name_Korean					= _SingleLine.at(1).GetString();
+			_Local_Item_String.Name_France					= _SingleLine.at(2).GetString();
+			_Local_Item_String.Name_German					= _SingleLine.at(3).GetString();
+			_Local_Item_String.Name_Chinese_Normal			= _SingleLine.at(4).GetString();
+			_Local_Item_String.Name_Chinese_Traditional		= _SingleLine.at(5).GetString();
+			_Local_Item_String.Name_Spanish					= _SingleLine.at(6).GetString();
+			_Local_Item_String.Name_Russan					= _SingleLine.at(8).GetString();
+			m_LocalItemStrings[_SingleLine.at(0).GetInt()]	= _Local_Item_String;
+		}
+		sLog->OutSuccess("读取 %d 条物品区域语言信息", _res.size());
+	}
+	else
+		sLog->OutBug("Load Template Error On void World::LoadLocalItemStrings()");
 }

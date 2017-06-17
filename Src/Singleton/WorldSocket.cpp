@@ -7,9 +7,13 @@
 
 WorldSocket* _WorldSocket = nullptr;
 
-WorldSocket::WorldSocket()
+WorldSocket::WorldSocket() : ServerIp(""),ServerPort(0)
 {
 	SocketNumber = sConfig->GetIntDefault("BattleNetWorkThread", 1);
+	ServerIp = sConfig->GetStringDefault("BattleNetServerIP", "127.0.0.1").c_str();
+	ServerPort = sConfig->GetIntDefault("BattleNetServerPort", 6000);
+	sLog->OutLog("服务器IP设置为%s", ServerIp.c_str());
+	sLog->OutLog("服务器端口设置为%d", ServerPort);
 }
 
 WorldSocket::~WorldSocket()
@@ -61,9 +65,9 @@ void WorldSocket::StartUp(bool& Finished)
 
 	//服务器端的地址和端口号  
 	struct sockaddr_in serverAddr, clientAdd;
-	serverAddr.sin_addr.s_addr = inet_addr(SERVER_IP);
+	serverAddr.sin_addr.s_addr = inet_addr(ServerIp.c_str());
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(SERVER_PORT);
+	serverAddr.sin_port = htons(ServerPort);
 
 	//3.绑定Socket，将Socket与某个协议的某个地址绑定  
 	err = ::bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
@@ -137,7 +141,6 @@ void WorldSocket::StartUp(bool& Finished)
 
 void WorldSocket::StartNewWorkThread(SocketList* pList)
 {
-	sLog->OutSuccess("网络线程开始启动...");
 	//传递进来的socketList指针  
 	SocketList* socketList = pList;
 	int ErrorCode = 0;

@@ -20,6 +20,11 @@
 
 #include "Common.h"
 
+enum AuctionListStatus
+{
+	ListFailded,
+	ListSuccess,
+};
 class WorldPacket;
 class Player;
 struct OpcodeHandler;
@@ -51,14 +56,18 @@ private:
 	uint32 BattleNetAccount;
 	uint32 LastPacketTime;
 	uint8 OutPingCount;
+	uint32 m_GuildId;
 public:
 	//handler
 	void Handle_NULL(WorldPacket& recvPacket);
+	void HandleMessageChatOpcode(WorldPacket& RecvPacket);
 	void HandleAuthLoginOpcode(WorldPacket& recvPacket);
 	void HandleClientHeartBeatOpcode(WorldPacket& /*packet*/) {}
 	void HandlePlayerGetDataOpcode(WorldPacket& /*recvPacket*/);
 	void HandleRequireNewsDataOpcode(WorldPacket& packet);
 	void HandleRequireActionDataOpcode(WorldPacket& /*packet*/);
+	void HandleAuctionHouseListItemOpcode(WorldPacket& packet);
+	void HandleAuctionHouseBuyItemOpcode(WorldPacket& packet);
 };
 #endif
 
